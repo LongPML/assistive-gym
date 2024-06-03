@@ -123,7 +123,7 @@ def render_policy(env, env_name, algo, policy_path, coop=False, colab=False, see
             if colab:
                 # Capture (render) an image from the camera
                 img, depth = env.get_camera_image_depth()
-                frames.append(img)
+                frames.append(img.astype(np.uint8))
     env.disconnect()
     if colab:
         filename = 'output_%s.png' % env_name
