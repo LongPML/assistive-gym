@@ -4,6 +4,7 @@ import numpy as np
 from ray.rllib.agents import ppo, sac
 from ray.tune.logger import pretty_print
 from numpngw import write_apng
+import cv2
 
 
 def setup_config(env, algo, coop=False, seed=0, extra_configs={}):
@@ -126,10 +127,17 @@ def render_policy(env, env_name, algo, policy_path, coop=False, colab=False, see
                 frames.append(img.astype(np.uint8))
     env.disconnect()
     if colab:
-        filename = 'output_%s.png' % env_name
-        write_apng(filename, frames, delay=100)
+        # filename = 'output_%s.png' % env_name
+        # write_apng(filename, frames, delay=100)
+        filename = 'output_%s.avi' % env_name
+        height, width, _ = frames[0].shape
+        video = cv2.VideoWriter(filename, 0, 10, (width,height))
+        for frame in frames:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            video.write(frame)
+        cv2.destroyAllWindows()
+        video.release()
         return filename
-
 def evaluate_policy(env_name, algo, policy_path, n_episodes=100, coop=False, seed=0, verbose=False, extra_configs={}):
     ray.init(num_cpus=multiprocessing.cpu_count(), ignore_reinit_error=True, log_to_driver=False)
     env = make_env(env_name, coop, seed=seed)
