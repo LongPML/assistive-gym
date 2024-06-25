@@ -1,4 +1,4 @@
-import os, sys, multiprocessing, gym, ray, shutil, argparse, importlib, glob
+import os, sys, multiprocessing, gym, ray, shutil, argparse, importlib, glob, json
 import numpy as np
 # from ray.rllib.agents.ppo import PPOTrainer, DEFAULT_CONFIG
 from ray.rllib.agents import ppo, sac
@@ -73,12 +73,28 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
     ray.init(num_cpus=multiprocessing.cpu_count(), ignore_reinit_error=True, log_to_driver=False)
     env = make_env(env_name, coop)
     agent, checkpoint_path = load_policy(env, algo, env_name, load_policy_path, coop, seed, extra_configs)
+    if load_policy_path != '':
+        checkpoint_num = int(load_policy_path.split('-')[-1])
+        hist_stats_path = "/".join(load_policy_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_num}.json"
+        hist_stats = json.load(open(hist_stats_path))
+    else:
+        hist_stats = {
+            "episode_lengths": [], 
+            "episode_reward": [],
+            "policy_human_reward": [],
+            "policy_robot_reward": [],
+        }
+        
     env.disconnect()
 
     timesteps = 0
     while timesteps < timesteps_total:
         result = agent.train()
         timesteps = result['timesteps_total']
+        hist_stats["episode_lengths"].append(result['hist_stats']['episode_lengths'])
+        hist_stats["episode_reward"].append(result['hist_stats']['episode_reward'])
+        hist_stats["policy_human_reward"].append(result['hist_stats']['policy_human_reward'])
+        hist_stats["policy_robot_reward"].append(result['hist_stats']['policy_robot_reward'])
         if coop:
             # Rewards are added in multi agent envs, so we divide by 2 since agents share the same reward in coop
             result['episode_reward_mean'] /= 2
@@ -92,6 +108,10 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
             shutil.rmtree(os.path.dirname(checkpoint_path), ignore_errors=True)
         # Save the recently trained policy
         checkpoint_path = agent.save(os.path.join(save_dir, algo, env_name))
+        # Save the history stats
+        hist_stats_path = "/".join(checkpoint_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_path.split('-')[-1]}.json"
+        json.dump(hist_stats, open(hist_stats_path, 'w'), sort_keys=True, indent=4)
+        
     return checkpoint_path
 
 def render_policy(env, env_name, algo, policy_path, coop=False, colab=False, seed=0, n_episodes=1, extra_configs={}):
