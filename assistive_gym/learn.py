@@ -1,5 +1,6 @@
-import os, sys, multiprocessing, gym, ray, shutil, argparse, importlib, glob, json
+import os, sys, multiprocessing, gym, ray, shutil, argparse, importlib, glob
 import numpy as np
+import pandas as pd
 # from ray.rllib.agents.ppo import PPOTrainer, DEFAULT_CONFIG
 from ray.rllib.agents import ppo, sac
 from ray.tune.logger import pretty_print
@@ -75,8 +76,8 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
     agent, checkpoint_path = load_policy(env, algo, env_name, load_policy_path, coop, seed, extra_configs)
     if load_policy_path != '':
         checkpoint_num = int(load_policy_path.split('-')[-1])
-        hist_stats_path = "/".join(load_policy_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_num}.json"
-        hist_stats = json.load(open(hist_stats_path))
+        hist_stats_path = "/".join(load_policy_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_num}.csv"
+        hist_stats = pd.read_csv(hist_stats_path)[["episode_lengths", "episode_reward", "policy_human_reward", "policy_robot_reward"]].to_dict(orient='list')
     else:
         hist_stats = {
             "episode_lengths": [], 
@@ -110,7 +111,8 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
         checkpoint_path = agent.save(os.path.join(save_dir, algo, env_name))
         # Save the history stats
         hist_stats_path = "/".join(checkpoint_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_path.split('-')[-1]}.json"
-        json.dump(hist_stats, open(hist_stats_path, 'w'), sort_keys=True, indent=4)
+        df = pd.DataFrame(hist_stats)
+        df.to_csv(hist_stats_path, index=False)
         
     return checkpoint_path
 
