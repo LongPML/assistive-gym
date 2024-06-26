@@ -1,3 +1,4 @@
+import csv
 import os, sys, multiprocessing, gym, ray, shutil, argparse, importlib, glob
 import numpy as np
 import pandas as pd
@@ -77,9 +78,10 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
     if load_policy_path != '':
         checkpoint_num = int(load_policy_path.split('-')[-1])
         hist_stats_path = "/".join(load_policy_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_num}.csv"
-        hist_stats = pd.read_csv(hist_stats_path)[["episode_lengths", "episode_reward", "policy_human_reward", "policy_robot_reward"]].to_dict(orient='list')
+        hist_stats = pd.read_csv(hist_stats_path)[["episode", "episode_lengths", "episode_reward", "policy_human_reward", "policy_robot_reward"]].to_dict(orient='list')
     else:
         hist_stats = {
+            "episode": [],
             "episode_lengths": [], 
             "episode_reward": [],
             "policy_human_reward": [],
@@ -92,10 +94,10 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
     while timesteps < timesteps_total:
         result = agent.train()
         timesteps = result['timesteps_total']
-        hist_stats["episode_lengths"].append(result['hist_stats']['episode_lengths'])
-        hist_stats["episode_reward"].append(result['hist_stats']['episode_reward'])
-        hist_stats["policy_human_reward"].append(result['hist_stats']['policy_human_reward'])
-        hist_stats["policy_robot_reward"].append(result['hist_stats']['policy_robot_reward'])
+        hist_stats["episode_lengths"].extend(result['hist_stats']['episode_lengths'])
+        hist_stats["episode_reward"].extend(result['hist_stats']['episode_reward'])
+        hist_stats["policy_human_reward"].extend(result['hist_stats']['policy_human_reward'])
+        hist_stats["policy_robot_reward"].extend(result['hist_stats']['policy_robot_reward'])
         if coop:
             # Rewards are added in multi agent envs, so we divide by 2 since agents share the same reward in coop
             result['episode_reward_mean'] /= 2
@@ -110,10 +112,18 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
         # Save the recently trained policy
         checkpoint_path = agent.save(os.path.join(save_dir, algo, env_name))
         # Save the history stats
-        hist_stats_path = "/".join(checkpoint_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_path.split('-')[-1]}.json"
-        df = pd.DataFrame(hist_stats)
-        df.to_csv(hist_stats_path, index=False)
-        
+        hist_stats_path = "/".join(checkpoint_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_path.split('-')[-1]}.csv"
+        with open(hist_stats_path, mode="w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=hist_stats.keys())
+            writer.writeheader()
+            for i in range(len(hist_stats["episode_lengths"])):
+                writer.writerow({
+                    "episode": i,
+                    "episode_lengths": hist_stats["episode_lengths"][i], 
+                    "episode_reward": hist_stats["episode_reward"][i], 
+                    "policy_human_reward": hist_stats["policy_human_reward"][i], 
+                    "policy_robot_reward": hist_stats["policy_robot_reward"][i]
+                })
     return checkpoint_path
 
 def render_policy(env, env_name, algo, policy_path, coop=False, colab=False, seed=0, n_episodes=1, extra_configs={}):
@@ -160,6 +170,7 @@ def render_policy(env, env_name, algo, policy_path, coop=False, colab=False, see
         cv2.destroyAllWindows()
         video.release()
         return filename
+    
 def evaluate_policy(env_name, algo, policy_path, n_episodes=100, coop=False, seed=0, verbose=False, extra_configs={}):
     ray.init(num_cpus=multiprocessing.cpu_count(), ignore_reinit_error=True, log_to_driver=False)
     env = make_env(env_name, coop, seed=seed)
