@@ -110,7 +110,7 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
         # Save the recently trained policy
         checkpoint_path = agent.save(os.path.join(save_dir, algo, env_name))
         # Save the history stats
-        hist_stats_path = "/".join(checkpoint_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_path.split('-')[-1]}.json"
+        hist_stats_path = "/".join(checkpoint_path.split("/")[:-1]) + f"/hist_stats_{checkpoint_path.split('-')[-1]}.csv"
         df = pd.DataFrame(hist_stats)
         df.to_csv(hist_stats_path, index=False)
         
