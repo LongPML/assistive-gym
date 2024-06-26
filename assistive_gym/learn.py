@@ -124,6 +124,7 @@ def train(env_name, algo, timesteps_total=1000000, save_dir='./trained_models/',
                     "policy_human_reward": hist_stats["policy_human_reward"][i], 
                     "policy_robot_reward": hist_stats["policy_robot_reward"][i]
                 })
+
     return checkpoint_path
 
 def render_policy(env, env_name, algo, policy_path, coop=False, colab=False, seed=0, n_episodes=1, extra_configs={}):
