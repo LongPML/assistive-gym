@@ -1,4 +1,5 @@
 import csv
+from matplotlib import pyplot as plt
 import os, sys, multiprocessing, gym, ray, shutil, argparse, importlib, glob
 import numpy as np
 import pandas as pd
@@ -224,6 +225,39 @@ def evaluate_policy(env_name, algo, policy_path, n_episodes=100, coop=False, see
     print('Task Success Mean:', np.mean(task_successes))
     print('Task Success Std:', np.std(task_successes))
     sys.stdout.flush()
+    
+def plot_hist_stats(hist_stats, title, episode_bin=20, label='PPO', coop=False):
+    rewards_bin_mean = hist_stats['episode_reward'].rolling(window=episode_bin).mean().values[episode_bin-1::episode_bin]
+    rewards_bin_min = hist_stats['episode_reward'].rolling(window=episode_bin).min().values[episode_bin-1::episode_bin]
+    rewards_bin_max = hist_stats['episode_reward'].rolling(window=episode_bin).max().values[episode_bin-1::episode_bin]
+    
+    if coop:
+        rewards_bin_mean /= 2
+        rewards_bin_min /= 2
+        rewards_bin_max /= 2
+    
+    bin_length = hist_stats['episode_lengths'].shape[0] // 20
+    steps_bin = [
+        np.sum(hist_stats['episode_lengths'][:(i+1)*20])
+        for i in range(bin_length)
+    ]
+    
+    # Create the plot
+    plt.figure(figsize=(10, 5))
+
+    # Plot ERL
+    plt.plot(steps_bin, rewards_bin_mean, label=label, color='blue')
+    plt.fill_between(steps_bin, rewards_bin_min, rewards_bin_max, color='blue', alpha=0.3)
+
+    # Customize the plot
+    plt.title(title)
+    plt.xlabel('Number of steps')
+    plt.ylabel('Score')
+    plt.legend()
+    plt.grid(True)
+
+    # Show the plot
+    plt.show()
 
 
 if __name__ == '__main__':
