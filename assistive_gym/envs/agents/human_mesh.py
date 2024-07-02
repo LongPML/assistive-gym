@@ -1,7 +1,16 @@
-import os, pickle, torch, smplx, trimesh, colorsys, tempfile, gc
+import colorsys
+import gc
+import os
+import pickle
+import tempfile
+
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 import pybullet as p
+import smplx
+import torch
+import trimesh
+from scipy.spatial.transform import Rotation as R
+
 from .agent import Agent
 
 right_arm_joints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -9,6 +18,7 @@ left_arm_joints = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 right_leg_joints = [28, 29, 30, 31, 32, 33, 34]
 left_leg_joints = [35, 36, 37, 38, 39, 40, 41]
 head_joints = [20, 21, 22, 23]
+
 
 class HumanMesh(Agent):
     def __init__(self):
@@ -61,8 +71,16 @@ class HumanMesh(Agent):
         self.j_left_pecs_x, self.j_left_pecs_y, self.j_left_pecs_z = 36, 37, 38
         self.j_right_pecs_x, self.j_right_pecs_y, self.j_right_pecs_z = 39, 40, 41
         self.j_upper_neck_x, self.j_upper_neck_y, self.j_upper_neck_z = 42, 43, 44
-        self.j_left_shoulder_x, self.j_left_shoulder_y, self.j_left_shoulder_z = 45, 46, 47
-        self.j_right_shoulder_x, self.j_right_shoulder_y, self.j_right_shoulder_z = 48, 49, 50
+        self.j_left_shoulder_x, self.j_left_shoulder_y, self.j_left_shoulder_z = (
+            45,
+            46,
+            47,
+        )
+        self.j_right_shoulder_x, self.j_right_shoulder_y, self.j_right_shoulder_z = (
+            48,
+            49,
+            50,
+        )
         self.j_left_elbow_x, self.j_left_elbow_y, self.j_left_elbow_z = 51, 52, 53
         self.j_right_elbow_x, self.j_right_elbow_y, self.j_right_elbow_z = 54, 55, 56
         self.j_left_wrist_x, self.j_left_wrist_y, self.j_left_wrist_z = 57, 58, 59
@@ -78,22 +96,34 @@ class HumanMesh(Agent):
         self.right_arm_vertex_indices = None
         self.bottom_index = 5574
 
-    def create_smplx_body(self, directory, id, np_random, gender='female', height=None, body_shape=None, joint_angles=[], position=[0, 0, 0], orientation=[0, 0, 0], body_pose=None):
+    def create_smplx_body(
+        self,
+        directory,
+        id,
+        np_random,
+        gender="female",
+        height=None,
+        body_shape=None,
+        joint_angles=[],
+        position=[0, 0, 0],
+        orientation=[0, 0, 0],
+        body_pose=None,
+    ):
         # Choose gender
         self.gender = gender
-        if self.gender not in ['male', 'female']:
-            self.gender = np_random.choice(['male', 'female'])
+        if self.gender not in ["male", "female"]:
+            self.gender = np_random.choice(["male", "female"])
 
         # Create SMPL-X model
-        model_folder = os.path.join(directory, 'smpl_models')
-        model = smplx.create(model_folder, model_type='smplx', gender=self.gender)
+        model_folder = os.path.join(directory, "smpl_models")
+        model = smplx.create(model_folder, model_type="smplx", gender=self.gender)
 
         # Define body shape
         if type(body_shape) == str:
-            params_filename = os.path.join(model_folder, 'human_params', body_shape)
-            with open(params_filename, 'rb') as f:
+            params_filename = os.path.join(model_folder, "human_params", body_shape)
+            with open(params_filename, "rb") as f:
                 params = pickle.load(f)
-            betas = torch.Tensor(params['betas'])
+            betas = torch.Tensor(params["betas"])
         elif body_shape is None:
             betas = torch.Tensor(np_random.uniform(-1, 5, (1, self.num_body_shape)))
         else:
@@ -103,12 +133,16 @@ class HumanMesh(Agent):
 
         # Set human body pose
         if body_pose is None:
-            body_pose = np.zeros((1, model.NUM_BODY_JOINTS*3))
+            body_pose = np.zeros((1, model.NUM_BODY_JOINTS * 3))
             for joint_index, angle in joint_angles:
                 body_pose[0, joint_index] = np.deg2rad(angle)
 
         # Generate standing human mesh and determine default height of the mesh
-        output = model(betas=betas, body_pose=torch.Tensor(np.zeros((1, model.NUM_BODY_JOINTS*3))), return_verts=True)
+        output = model(
+            betas=betas,
+            body_pose=torch.Tensor(np.zeros((1, model.NUM_BODY_JOINTS * 3))),
+            return_verts=True,
+        )
         vertices = output.vertices.detach().cpu().numpy().squeeze()
         out_mesh = trimesh.Trimesh(vertices, model.faces)
         rot = trimesh.transformations.rotation_matrix(np.deg2rad(90), [1, 0, 0])
@@ -119,18 +153,20 @@ class HumanMesh(Agent):
         # np.savetxt('right_arm_vertex_indices.csv', self.vert_indices, delimiter=',', fm1='%d')
 
         # Generate human mesh with correct height scaling
-        height_scale = height/out_mesh.extents[-1] if height is not None else 1.0
+        height_scale = height / out_mesh.extents[-1] if height is not None else 1.0
         # print('Scale:', height_scale, '=', height, '/', out_mesh.extents[-1])
-        output = model(betas=betas, body_pose=torch.Tensor(body_pose), return_verts=True)
+        output = model(
+            betas=betas, body_pose=torch.Tensor(body_pose), return_verts=True
+        )
         vertices = output.vertices.detach().cpu().numpy().squeeze()
         joints = output.joints.detach().cpu().numpy().squeeze()
         # Scale vertices and rotate
         orient_quat = p.getQuaternionFromEuler(orientation, physicsClientId=id)
-        vertices = vertices*height_scale
-        vertices = vertices.dot(R.from_euler('x', -90, degrees=True).as_matrix())
+        vertices = vertices * height_scale
+        vertices = vertices.dot(R.from_euler("x", -90, degrees=True).as_matrix())
         vertices = vertices.dot(R.from_quat(orient_quat).as_matrix())
-        joints = joints*height_scale
-        joints = joints.dot(R.from_euler('x', -90, degrees=True).as_matrix())
+        joints = joints * height_scale
+        joints = joints.dot(R.from_euler("x", -90, degrees=True).as_matrix())
         joints = joints.dot(R.from_quat(orient_quat).as_matrix())
         out_mesh = trimesh.Trimesh(vertices, model.faces)
         # scale = trimesh.transformations.scale_matrix(height_scale, [0, 0, 0])
@@ -140,27 +176,80 @@ class HumanMesh(Agent):
 
         return out_mesh, vertices, joints
 
-    def init(self, directory, id, np_random, gender='female', height=None, body_shape=None, joint_angles=[], position=[0, 0, 0], orientation=[0, 0, 0], skin_color='random', specular_color=[0.1, 0.1, 0.1], body_pose=None, out_mesh=None, vertices=None, joints=None):
+    def init(
+        self,
+        directory,
+        id,
+        np_random,
+        gender="female",
+        height=None,
+        body_shape=None,
+        joint_angles=[],
+        position=[0, 0, 0],
+        orientation=[0, 0, 0],
+        skin_color="random",
+        specular_color=[0.1, 0.1, 0.1],
+        body_pose=None,
+        out_mesh=None,
+        vertices=None,
+        joints=None,
+    ):
         if out_mesh is None:
             # Create mesh
-            out_mesh, vertices, joints = self.create_smplx_body(directory, id, np_random, gender, height, body_shape, joint_angles, position, orientation, body_pose)
+            out_mesh, vertices, joints = self.create_smplx_body(
+                directory,
+                id,
+                np_random,
+                gender,
+                height,
+                body_shape,
+                joint_angles,
+                position,
+                orientation,
+                body_pose,
+            )
 
-        model_folder = os.path.join(directory, 'smpl_models')
+        model_folder = os.path.join(directory, "smpl_models")
         self.skin_color = skin_color
-        if self.skin_color == 'random':
+        if self.skin_color == "random":
             hsv = list(colorsys.rgb_to_hsv(0.8, 0.6, 0.4))
             hsv[-1] = np_random.uniform(0.4, 0.8)
             self.skin_color = list(colorsys.hsv_to_rgb(*hsv)) + [1.0]
 
         if self.right_arm_vertex_indices is None:
-            self.right_arm_vertex_indices = np.loadtxt(os.path.join(model_folder, 'right_arm_vertex_indices.csv'), delimiter=',', dtype=np.int)
+            self.right_arm_vertex_indices = np.loadtxt(
+                os.path.join(model_folder, "right_arm_vertex_indices.csv"),
+                delimiter=",",
+                dtype=np.int,
+            )
 
         # Load mesh into environment
-        with tempfile.NamedTemporaryFile(suffix='.obj') as f:
+        with tempfile.NamedTemporaryFile(suffix=".obj") as f:
             out_mesh.export(f.name)
-            human_visual = p.createVisualShape(shapeType=p.GEOM_MESH, fileName=f.name, meshScale=1.0, rgbaColor=self.skin_color, specularColor=specular_color, physicsClientId=id)
-            human_collision = p.createCollisionShape(shapeType=p.GEOM_MESH, fileName=f.name, meshScale=1.0, flags=p.GEOM_FORCE_CONCAVE_TRIMESH, physicsClientId=id)
-            self.body = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=human_collision, baseVisualShapeIndex=human_visual, basePosition=position, baseOrientation=[0, 0, 0, 1], useMaximalCoordinates=False, physicsClientId=id)
+            human_visual = p.createVisualShape(
+                shapeType=p.GEOM_MESH,
+                fileName=f.name,
+                meshScale=1.0,
+                rgbaColor=self.skin_color,
+                specularColor=specular_color,
+                physicsClientId=id,
+            )
+            human_collision = p.createCollisionShape(
+                shapeType=p.GEOM_MESH,
+                fileName=f.name,
+                meshScale=1.0,
+                flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+                physicsClientId=id,
+            )
+            self.body = p.createMultiBody(
+                baseMass=0,
+                baseCollisionShapeIndex=human_collision,
+                baseVisualShapeIndex=human_visual,
+                basePosition=position,
+                baseOrientation=[0, 0, 0, 1],
+                useMaximalCoordinates=False,
+                physicsClientId=id,
+            )
             # self.body = p.createMultiBody(baseMass=0, baseVisualShapeIndex=human_visual, basePosition=position, baseOrientation=[0, 0, 0, 1], useMaximalCoordinates=False, physicsClientId=id)
 
         super(HumanMesh, self).init(self.body, id, np_random, indices=-1)
@@ -185,4 +274,3 @@ class HumanMesh(Agent):
     def get_vertex_positions(self, vertices):
         pos, _ = self.get_base_pos_orient()
         return self.vertex_positions[vertices] + pos
-

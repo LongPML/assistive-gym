@@ -1,10 +1,80 @@
-from assistive_gym.envs.scratch_itch_envs import ScratchItchPR2Env, ScratchItchBaxterEnv, ScratchItchSawyerEnv, ScratchItchJacoEnv, ScratchItchStretchEnv, ScratchItchPandaEnv, ScratchItchPR2HumanEnv, ScratchItchBaxterHumanEnv, ScratchItchSawyerHumanEnv, ScratchItchJacoHumanEnv, ScratchItchStretchHumanEnv, ScratchItchPandaHumanEnv
-from assistive_gym.envs.scratch_itch_envs import ScratchItchPR2MeshEnv, ScratchItchBaxterMeshEnv, ScratchItchSawyerMeshEnv, ScratchItchJacoMeshEnv, ScratchItchStretchMeshEnv, ScratchItchPandaMeshEnv
-from assistive_gym.envs.bed_bathing_envs import BedBathingPR2Env, BedBathingBaxterEnv, BedBathingSawyerEnv, BedBathingJacoEnv, BedBathingStretchEnv, BedBathingPandaEnv, BedBathingPR2HumanEnv, BedBathingBaxterHumanEnv, BedBathingSawyerHumanEnv, BedBathingJacoHumanEnv, BedBathingStretchHumanEnv, BedBathingPandaHumanEnv
-from assistive_gym.envs.drinking_envs import DrinkingPR2Env, DrinkingBaxterEnv, DrinkingSawyerEnv, DrinkingJacoEnv, DrinkingStretchEnv, DrinkingPandaEnv, DrinkingPR2HumanEnv, DrinkingBaxterHumanEnv, DrinkingSawyerHumanEnv, DrinkingJacoHumanEnv, DrinkingStretchHumanEnv, DrinkingPandaHumanEnv
-from assistive_gym.envs.feeding_envs import FeedingPR2Env, FeedingBaxterEnv, FeedingSawyerEnv, FeedingJacoEnv, FeedingStretchEnv, FeedingPandaEnv, FeedingPR2HumanEnv, FeedingBaxterHumanEnv, FeedingSawyerHumanEnv, FeedingJacoHumanEnv, FeedingStretchHumanEnv, FeedingPandaHumanEnv
-from assistive_gym.envs.feeding_envs import FeedingPR2MeshEnv, FeedingBaxterMeshEnv, FeedingSawyerMeshEnv, FeedingJacoMeshEnv, FeedingStretchMeshEnv, FeedingPandaMeshEnv
-from assistive_gym.envs.dressing_envs import DressingPR2Env, DressingBaxterEnv, DressingSawyerEnv, DressingJacoEnv, DressingStretchEnv, DressingPandaEnv, DressingPR2HumanEnv, DressingBaxterHumanEnv, DressingSawyerHumanEnv, DressingJacoHumanEnv, DressingStretchHumanEnv, DressingPandaHumanEnv
-from assistive_gym.envs.arm_manipulation_envs import ArmManipulationPR2Env, ArmManipulationBaxterEnv, ArmManipulationSawyerEnv, ArmManipulationJacoEnv, ArmManipulationStretchEnv, ArmManipulationPandaEnv, ArmManipulationPR2HumanEnv, ArmManipulationBaxterHumanEnv, ArmManipulationSawyerHumanEnv, ArmManipulationJacoHumanEnv, ArmManipulationStretchHumanEnv, ArmManipulationPandaHumanEnv
+from assistive_gym.envs.arm_manipulation_envs import (
+    ArmManipulationBaxterEnv, ArmManipulationBaxterHumanEnv,
+    ArmManipulationJacoEnv, ArmManipulationJacoHumanEnv,
+    ArmManipulationPandaEnv, ArmManipulationPandaHumanEnv,
+    ArmManipulationPR2Env, ArmManipulationPR2HumanEnv,
+    ArmManipulationSawyerEnv, ArmManipulationSawyerHumanEnv,
+    ArmManipulationStretchEnv, ArmManipulationStretchHumanEnv)
+from assistive_gym.envs.bed_bathing_envs import (BedBathingBaxterEnv,
+                                                 BedBathingBaxterHumanEnv,
+                                                 BedBathingJacoEnv,
+                                                 BedBathingJacoHumanEnv,
+                                                 BedBathingPandaEnv,
+                                                 BedBathingPandaHumanEnv,
+                                                 BedBathingPR2Env,
+                                                 BedBathingPR2HumanEnv,
+                                                 BedBathingSawyerEnv,
+                                                 BedBathingSawyerHumanEnv,
+                                                 BedBathingStretchEnv,
+                                                 BedBathingStretchHumanEnv)
+from assistive_gym.envs.dressing_envs import (DressingBaxterEnv,
+                                              DressingBaxterHumanEnv,
+                                              DressingJacoEnv,
+                                              DressingJacoHumanEnv,
+                                              DressingPandaEnv,
+                                              DressingPandaHumanEnv,
+                                              DressingPR2Env,
+                                              DressingPR2HumanEnv,
+                                              DressingSawyerEnv,
+                                              DressingSawyerHumanEnv,
+                                              DressingStretchEnv,
+                                              DressingStretchHumanEnv)
+from assistive_gym.envs.drinking_envs import (DrinkingBaxterEnv,
+                                              DrinkingBaxterHumanEnv,
+                                              DrinkingJacoEnv,
+                                              DrinkingJacoHumanEnv,
+                                              DrinkingPandaEnv,
+                                              DrinkingPandaHumanEnv,
+                                              DrinkingPR2Env,
+                                              DrinkingPR2HumanEnv,
+                                              DrinkingSawyerEnv,
+                                              DrinkingSawyerHumanEnv,
+                                              DrinkingStretchEnv,
+                                              DrinkingStretchHumanEnv)
+from assistive_gym.envs.feeding_envs import (FeedingBaxterEnv,
+                                             FeedingBaxterHumanEnv,
+                                             FeedingBaxterMeshEnv,
+                                             FeedingJacoEnv,
+                                             FeedingJacoHumanEnv,
+                                             FeedingJacoMeshEnv,
+                                             FeedingPandaEnv,
+                                             FeedingPandaHumanEnv,
+                                             FeedingPandaMeshEnv,
+                                             FeedingPR2Env, FeedingPR2HumanEnv,
+                                             FeedingPR2MeshEnv,
+                                             FeedingSawyerEnv,
+                                             FeedingSawyerHumanEnv,
+                                             FeedingSawyerMeshEnv,
+                                             FeedingStretchEnv,
+                                             FeedingStretchHumanEnv,
+                                             FeedingStretchMeshEnv)
 from assistive_gym.envs.human_testing import HumanTestingEnv
+from assistive_gym.envs.scratch_itch_envs import (ScratchItchBaxterEnv,
+                                                  ScratchItchBaxterHumanEnv,
+                                                  ScratchItchBaxterMeshEnv,
+                                                  ScratchItchJacoEnv,
+                                                  ScratchItchJacoHumanEnv,
+                                                  ScratchItchJacoMeshEnv,
+                                                  ScratchItchPandaEnv,
+                                                  ScratchItchPandaHumanEnv,
+                                                  ScratchItchPandaMeshEnv,
+                                                  ScratchItchPR2Env,
+                                                  ScratchItchPR2HumanEnv,
+                                                  ScratchItchPR2MeshEnv,
+                                                  ScratchItchSawyerEnv,
+                                                  ScratchItchSawyerHumanEnv,
+                                                  ScratchItchSawyerMeshEnv,
+                                                  ScratchItchStretchEnv,
+                                                  ScratchItchStretchHumanEnv,
+                                                  ScratchItchStretchMeshEnv)
 from assistive_gym.envs.smplx_testing import SMPLXTestingEnv
