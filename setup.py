@@ -29,7 +29,7 @@ setup(
     # install_requires=['gym>=0.2.3', 'pybullet', 'numpy', 'keras==2.3.0', 'tensorflow==1.14.0', 'h5py==2.10.0', 'smplx', 'trimesh'] + ['screeninfo==0.6.1' if sys.version_info >= (3, 6) else 'screeninfo==0.2'],
     # install_requires=['gym>=0.2.3', 'pybullet @ git+https://github.com/Zackory/bullet3.git#egg=pybullet', 'numpy', 'keras==2.3.0', 'tensorflow==1.14.0', 'h5py==2.10.0', 'smplx', 'trimesh', 'ray[rllib]', 'numpngw', 'tensorflow-probability==0.7.0'] + ['screeninfo==0.6.1' if sys.version_info >= (3, 6) else 'screeninfo==0.2'],
     install_requires=[
-        "gym==0.22.0",
+        "gym==0.21.0",
         "pybullet @ git+https://github.com/Zackory/bullet3.git#egg=pybullet",
         "numpy",
         "keras==2.3.0",
